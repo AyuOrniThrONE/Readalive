@@ -1,13 +1,26 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>ReadAlive</title>
-  <link rel="stylesheet" href="styles.css">
-  <link rel="javascript" href="popup.js">
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 10px;
+      width: 180px;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+  </style>
 </head>
 <body>
-  <h3>ReadAlive</h3>
-  <p id="stats">Loading stats...</p>
-  <p>Status: <strong>Active</strong></p>
+  <label>
+    <input type="checkbox" id="toggle" />
+    Enable on this tab
+  </label>
+
+  <script src="popup.js"></script>
 </body>
 </html>
