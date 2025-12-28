@@ -49,3 +49,44 @@ body {
 .dot.active {
   background: #4CAF50;
 }
+
+.readalive-brand {
+  display: flex;
+  align-items: center;     /* vertical alignment */
+  justify-content: center; /* horizontal centering */
+  gap: 8px;                /* space between logo & text */
+  margin-top: 12px;
+}
+
+.readalive-logo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+}
+
+.readalive-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
+}
+.readalive-brand {
+  display: flex;
+  align-items: center;     /* vertical alignment */
+  justify-content: center; /* horizontal centering */
+  gap: 8px;                /* space between logo & text */
+  margin-top: 12px;
+}
+
+.readalive-logo {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+.readalive-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #444;
+  justify-content: center;
+  opacity: 0.85;
+}
