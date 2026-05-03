@@ -10,4 +10,4 @@ No browsing history, page content, or personal information is sent to external s
 
 Any settings are stored locally using Chrome’s storage APIs and remain on the user’s device.
 
-Contact: your-email@gmail.com
+Contact: ayushprakashthaware@gmail.com
