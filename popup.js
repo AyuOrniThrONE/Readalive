@@ -15,4 +15,3 @@ document.addEventListener("DOMContentLoaded", async () => {
     });
   });
 });
-chrome.tabs.sendMessage(tab.id, { type: "ENABLE" });

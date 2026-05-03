@@ -5,6 +5,15 @@ let isEnabled = false;
 let inactivityTimer = null;
 let lastActivityTime = Date.now();
 
+// Restore state on reload
+chrome.runtime.sendMessage({ type: "GET_STATE" }, (isEnabledState) => {
+  if (isEnabledState) {
+    isEnabled = true;
+    lastActivityTime = Date.now();
+    startInactivityCheck();
+  }
+});
+
 // Short threshold for testing (increase later)
 const inactivityThreshold = 45000;
 
@@ -75,46 +84,42 @@ function stopInactivityCheck() {
 function triggerOverlay() {
   if (document.getElementById("readalive-overlay")) return;
 
-  const logoUrl = chrome.runtime.getURL("icons/icons48.png");
-const headings = extractHeadings(); 
-const lastHeading = headings.length ? headings[headings.length - 1] : "SCROLL UP TO SEE";
-  const overlay = document.createElement("div");
-  overlay.id = "readalive-overlay";
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
+  const headings = extractHeadings(); 
+  const lastHeading = headings.length ? headings[headings.length - 1] : "SCROLL UP TO SEE";
 
-  overlay.innerHTML = `
-  <div class="readalive-modal">
+  renderOverlay(`
       <h3>👀 Stay Awake</h3>
       <p>Last topic:<strong> ${lastHeading}</strong></p> 
       <p style="margin-top:10px">Tap all 3 dots</p>
+      <div class="readalive-dots"> <span class="readalive-dot"></span> <span class="readalive-dot"></span> <span class="readalive-dot"></span> </div>
+  `);
 
-      <div class="dots"> <span class="dot"></span> <span class="dot"></span> <span class="dot"></span> </div>
-
-      <div style="display:flex;align-items:center;justify-content:center;gap:6px;">
-        <img src="${logoUrl}" width="20" />
-        <strong>ReadAlive</strong>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(overlay);
-
- let hitCount = 0; overlay.querySelectorAll(".dot").forEach(dot => { dot.addEventListener("click", () => { if (!dot.classList.contains("active")) { dot.classList.add("active"); hitCount++; } if (hitCount === 3) overlay.remove(); }); });
+  let hitCount = 0; 
+  document.querySelectorAll("#readalive-overlay .readalive-dot").forEach(dot => { 
+    dot.addEventListener("click", () => { 
+      if (!dot.classList.contains("active")) { 
+        dot.classList.add("active"); 
+        hitCount++; 
+      } 
+      if (hitCount === 3) removeOverlay(); 
+    }); 
+  });
 }
 
 function removeOverlay() {
   const el = document.getElementById("readalive-overlay");
   if (el) el.remove();
 }
-function extractHeadings() { const headings = []; document.querySelectorAll("h1, h2, h3, h4").forEach(h => { const text = h.innerText.trim(); if (text) headings.push(text); }); return headings; }
+
+function extractHeadings() { 
+  const headings = []; 
+  document.querySelectorAll("h1, h2, h3, h4").forEach(h => { 
+    const text = h.innerText.trim(); 
+    if (text) headings.push(text); 
+  }); 
+  return headings; 
+}
+
 function renderOverlay(innerHTML) {
   if (document.getElementById("readalive-overlay")) return;
 
@@ -122,29 +127,13 @@ function renderOverlay(innerHTML) {
 
   const overlay = document.createElement("div");
   overlay.id = "readalive-overlay";
-  overlay.style.cssText = `
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.6);
-    z-index: 999999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  `;
 
   overlay.innerHTML = `
-    <div style="
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      text-align: center;
-      width: 280px;
-    ">
+    <div class="readalive-modal">
       ${innerHTML}
-
-      <div style="margin-top:16px;display:flex;align-items:center;justify-content:center;gap:6px;">
-        <img src="${logoUrl}" width="20" />
-        <strong>ReadAlive</strong>
+      <div class="readalive-brand">
+        <img src="${logoUrl}" class="readalive-logo" />
+        <span class="readalive-text">ReadAlive</span>
       </div>
     </div>
   `;
@@ -159,9 +148,10 @@ function triggerQuestion() {
   }
 
   const correct = headings[headings.length - 1];
+  const incorrectOptions = headings.filter(h => h !== correct);
   const options = shuffleArray([
     correct,
-    ...shuffleArray(headings).slice(0, 2)
+    ...shuffleArray(incorrectOptions).slice(0, 2)
   ]).slice(0, 3);
 
   renderOverlay(`
@@ -170,7 +160,7 @@ function triggerQuestion() {
 
     <div style="margin-top:12px">
       ${options.map(opt => `
-        <button class="qa-option"
+        <button class="readalive-qa-option" data-answer="${opt.replace(/"/g, '&quot;')}"
           style="
             display:block;
             width:100%;
@@ -186,8 +176,16 @@ function triggerQuestion() {
     </div>
   `);
 
-  document.querySelectorAll(".qa-option").forEach(btn => {
-    btn.onclick = () => removeOverlay();
+  document.querySelectorAll(".readalive-qa-option").forEach(btn => {
+    btn.onclick = () => {
+      if (btn.getAttribute("data-answer") === correct) {
+        removeOverlay();
+      } else {
+        btn.style.backgroundColor = "#ffcccc";
+        btn.style.borderColor = "#ff9999";
+        btn.innerText = "Incorrect, try again!";
+      }
+    };
   });
 }
 function shuffleArray(arr) {
