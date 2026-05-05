@@ -113,9 +113,12 @@ function removeOverlay() {
 
 function extractHeadings() { 
   const headings = []; 
+  const meaninglessWords = ["home", "next", "previous", "menu"];
   document.querySelectorAll("h1, h2, h3, h4").forEach(h => { 
     const text = h.innerText.trim(); 
-    if (text) headings.push(text); 
+    if (text.length >= 10 && !meaninglessWords.includes(text.toLowerCase())) {
+      headings.push(text); 
+    }
   }); 
   return headings; 
 }
@@ -140,19 +143,24 @@ function renderOverlay(innerHTML) {
 
   document.body.appendChild(overlay);
 }
+function generateOptions(headings) {
+  const correct = headings[headings.length - 1];
+  const distractorsPool = headings.slice(0, -1);
+  const numDistractors = Math.random() < 0.5 ? 2 : 3;
+  const distractors = shuffleArray(distractorsPool).slice(0, numDistractors);
+  
+  const options = shuffleArray([correct, ...distractors]);
+  return { correct, options };
+}
+
 function triggerQuestion() {
   const headings = extractHeadings();
-  if (!headings.length) {
+  if (headings.length < 2) {
     triggerOverlay(); // fallback
     return;
   }
 
-  const correct = headings[headings.length - 1];
-  const incorrectOptions = headings.filter(h => h !== correct);
-  const options = shuffleArray([
-    correct,
-    ...shuffleArray(incorrectOptions).slice(0, 2)
-  ]).slice(0, 3);
+  const { correct, options } = generateOptions(headings);
 
   renderOverlay(`
     <h3>🤔 Quick Check</h3>
@@ -160,7 +168,7 @@ function triggerQuestion() {
 
     <div style="margin-top:12px">
       ${options.map(opt => `
-        <button class="readalive-qa-option" data-answer="${opt.replace(/"/g, '&quot;')}"
+        <button class="readalive-qa-option" data-correct="${opt === correct}"
           style="
             display:block;
             width:100%;
@@ -178,16 +186,19 @@ function triggerQuestion() {
 
   document.querySelectorAll(".readalive-qa-option").forEach(btn => {
     btn.onclick = () => {
-      if (btn.getAttribute("data-answer") === correct) {
-        removeOverlay();
+      const isCorrect = btn.getAttribute("data-correct") === "true";
+      if (isCorrect) {
+        btn.style.backgroundColor = "#d4edda";
+        btn.innerText += " ✅";
       } else {
-        btn.style.backgroundColor = "#ffcccc";
-        btn.style.borderColor = "#ff9999";
-        btn.innerText = "Incorrect, try again!";
+        btn.style.backgroundColor = "#f8d7da";
+        btn.innerText += " ❌";
       }
+      setTimeout(removeOverlay, 800);
     };
   });
 }
+
 function shuffleArray(arr) {
   return [...arr].sort(() => Math.random() - 0.5);
 }
